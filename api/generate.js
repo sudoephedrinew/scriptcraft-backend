@@ -1,11 +1,8 @@
 // /api/generate.js
 
 export default async function handler(request, response) {
-  // The vercel.json file now handles CORS and routing.
-  // This function only needs to handle the POST logic.
-  if (request.method !== 'POST') {
-    return response.status(405).json({ message: 'Method Not Allowed' });
-  }
+  // vercel.json now handles routing and CORS preflight (OPTIONS) requests.
+  // This function assumes it will only ever receive valid POST requests.
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -33,7 +30,6 @@ export default async function handler(request, response) {
       ---
     `;
 
-    // ** URL IS NOW CORRECTED **
     const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const requestBody = {
@@ -59,6 +55,8 @@ export default async function handler(request, response) {
     const data = await googleResponse.json();
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No content generated.';
 
+    // Add the required CORS header to the actual response from the function
+    response.setHeader('Access-Control-Allow-Origin', '*');
     return response.status(200).json({ generatedText: generatedText });
 
   } catch (error) {
