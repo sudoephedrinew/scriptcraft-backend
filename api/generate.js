@@ -1,27 +1,20 @@
 // /api/generate.js
 
-// Helper function to set CORS headers and handle preflight requests
-const allowCors = fn => async (req, res) => {
-  res.setHeader('Access-Control-Allow-Credentials', true)
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-  
-  if (req.method === 'OPTIONS') {
-    res.status(204).end()
-    return
-  }
-  return await fn(req, res)
-}
+export default async function handler(request, response) {
+  // Set CORS headers for the actual POST response
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'POST');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-const handler = async (request, response) => {
+  // We only need to check for POST now
   if (request.method !== 'POST') {
     return response.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  // Retrieve the secret API key
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return response.status(500).json({ message: 'API key not configured on the server.' });
+    return response.status(500).json({ message: 'API key not configured.' });
   }
 
   try {
@@ -45,7 +38,7 @@ const handler = async (request, response) => {
       ---
     `;
 
-    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const geminiApiUrl = `https://generativelenlanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const requestBody = {
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ parts: [{ text: promptTemplate }] }],
@@ -59,7 +52,6 @@ const handler = async (request, response) => {
 
     if (!googleResponse.ok) {
       const errorBody = await googleResponse.json();
-      console.error('Google API Error:', errorBody);
       return response.status(googleResponse.status).json({
         message: 'Failed to get a response from the AI service.',
         error: errorBody.error.message,
@@ -70,10 +62,9 @@ const handler = async (request, response) => {
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No content generated.';
 
     return response.status(200).json({ generatedText: generatedText });
+
   } catch (error) {
     console.error('Internal Server Error:', error);
     return response.status(500).json({ message: 'An internal server error occurred.' });
   }
 }
-
-export default allowCors(handler);
