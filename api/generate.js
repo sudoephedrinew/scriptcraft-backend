@@ -1,20 +1,15 @@
 // /api/generate.js
 
 export default async function handler(request, response) {
-  // Set CORS headers for the actual POST response
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'POST');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // We only need to check for POST now
+  // The vercel.json file now handles CORS and routing.
+  // This function only needs to handle the POST logic.
   if (request.method !== 'POST') {
     return response.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  // Retrieve the secret API key
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return response.status(500).json({ message: 'API key not configured.' });
+    return response.status(500).json({ message: 'API key not configured on the server.' });
   }
 
   try {
@@ -38,7 +33,9 @@ export default async function handler(request, response) {
       ---
     `;
 
-    const geminiApiUrl = `https://generativelenlanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // ** URL IS NOW CORRECTED **
+    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
     const requestBody = {
       systemInstruction: { parts: [{ text: systemInstruction }] },
       contents: [{ parts: [{ text: promptTemplate }] }],
@@ -52,6 +49,7 @@ export default async function handler(request, response) {
 
     if (!googleResponse.ok) {
       const errorBody = await googleResponse.json();
+      console.error('Google API Error:', errorBody);
       return response.status(googleResponse.status).json({
         message: 'Failed to get a response from the AI service.',
         error: errorBody.error.message,
