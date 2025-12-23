@@ -50,7 +50,7 @@ export default async function handler(request, response) {
     `;
 
     // 6. Construct the request to the actual Google Gemini API
-    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
 
     const requestBody = {
       systemInstruction: {
